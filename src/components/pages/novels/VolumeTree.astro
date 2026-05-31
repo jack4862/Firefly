@@ -1,0 +1,64 @@
+---
+import type { VolumeGroup } from "@/utils/novel-utils";
+import { url } from "@/utils/url-utils";
+
+interface Props {
+	novelId: string;
+	volumes: VolumeGroup[];
+}
+
+const { novelId, volumes } = Astro.props;
+---
+
+<div class="volume-tree">
+  {volumes.map((vol, volIndex) => (
+    <div class="volume-group mb-4">
+      <button
+        class="volume-toggle w-full flex items-center gap-2 px-4 py-3 rounded-lg bg-(--btn-regular-bg) hover:bg-(--btn-regular-bg-hover) transition-colors duration-200 text-left"
+        data-volume-index={volIndex}
+      >
+        <svg class="w-4 h-4 transition-transform duration-200 volume-arrow" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+          <polyline points="6 9 12 15 18 9"/>
+        </svg>
+        <span class="font-medium text-neutral-900 dark:text-neutral-100">
+          {vol.volumeName}
+        </span>
+        <span class="text-xs text-neutral-500 ml-auto">
+          {vol.chapters.length} 章
+        </span>
+      </button>
+
+      <div class="chapter-list hidden ml-4 mt-1 space-y-0.5" data-volume-index={volIndex}>
+        {vol.chapters.map((ch) => (
+          <a
+            href={url(`/novels/${novelId}/${ch.slug}/`)}
+            class="flex items-center gap-2 px-4 py-2 rounded-lg hover:bg-(--btn-regular-bg) transition-colors duration-200 text-sm"
+          >
+            <span class="text-neutral-400 w-8 text-right">{ch.chapter}</span>
+            <span class="text-neutral-700 dark:text-neutral-300 line-clamp-1">
+              {ch.chapterTitle}
+            </span>
+          </a>
+        ))}
+      </div>
+    </div>
+  ))}
+</div>
+
+<script is:inline>
+document.addEventListener("click", function (e) {
+  var btn = e.target.closest(".volume-toggle");
+  if (!btn) return;
+
+  var list = btn.closest(".volume-group").querySelector(".chapter-list");
+  var arrow = btn.querySelector(".volume-arrow");
+
+  if (list.classList.contains("hidden")) {
+    list.classList.remove("hidden");
+    arrow.style.transform = "rotate(180deg)";
+  } else {
+    list.classList.add("hidden");
+    arrow.style.transform = "";
+  }
+});
+</script>

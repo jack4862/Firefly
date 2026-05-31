@@ -1,0 +1,185 @@
+---
+import { Icon } from "astro-icon/components";
+import NovelCard from "@/components/pages/novels/NovelCard.astro";
+import { novelConfig, siteConfig } from "@/config";
+import I18nKey from "@/i18n/i18nKey";
+import { i18n } from "@/i18n/translation";
+import MainGridLayout from "@/layouts/MainGridLayout.astro";
+import { getNovels } from "@/utils/novel-utils";
+
+if (!siteConfig.pages.novels) {
+	return Astro.redirect("/404/");
+}
+
+const title = i18n(I18nKey.novels);
+const description = i18n(I18nKey.novelsDescription);
+
+const novels = await getNovels();
+
+const allTags = [...new Set(novels.flatMap((n) => n.tags || []))].sort();
+---
+
+<MainGridLayout title={title} description={description}>
+  <div
+    class="flex w-full rounded-(--radius-large) overflow-hidden relative min-h-32"
+  >
+    <div class="card-base z-10 px-9 py-6 relative w-full">
+      <div class="mb-4">
+        <div class="flex items-center gap-3 mb-3">
+          <div
+            class="h-8 w-8 rounded-lg bg-(--primary) flex items-center justify-center text-white dark:text-black/70"
+          >
+            <Icon name="material-symbols:menu-book" class="text-[1.5rem]" />
+          </div>
+          <div class="text-3xl font-bold text-neutral-900 dark:text-neutral-100">
+            {title}
+          </div>
+        </div>
+        {description && (
+          <p class="text-base text-neutral-600 dark:text-neutral-400 leading-relaxed mb-4">
+            {description}
+          </p>
+        )}
+      </div>
+
+      {novels.length > 0 && allTags.length > 0 && (
+        <novel-filter class="flex flex-wrap gap-2 mb-6">
+          <button
+            data-tag="all"
+            class="btn-regular px-3 py-1.5 rounded-lg bg-(--primary) text-white hover:bg-(--primary) transition-colors duration-200 text-sm font-medium"
+          >
+            {i18n(I18nKey.all)}
+          </button>
+          {allTags.map((tag) => (
+            <button
+              data-tag={tag}
+              class="btn-regular px-3 py-1.5 rounded-lg bg-(--btn-regular-bg) text-(--btn-content) hover:bg-(--btn-regular-bg-hover) transition-colors duration-200 text-sm font-medium"
+            >
+              {tag}
+            </button>
+          ))}
+        </novel-filter>
+      )}
+
+      <div id="novel-grid" class={`grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4 my-4 ${novels.length === 0 ? 'hidden' : ''}`}>
+        {novels.map((novel) => (
+          <NovelCard
+            id={novel.id}
+            title={novel.title}
+            author={novel.author}
+            cover={novel.cover}
+            description={novel.description}
+            tags={novel.tags}
+            status={novel.status}
+            chapterCount={novel.chapterCount}
+          />
+        ))}
+      </div>
+      <div id="novel-empty" class={`flex flex-col items-center justify-center py-16 text-neutral-400 dark:text-neutral-500 ${novels.length > 0 ? 'hidden' : ''}`}>
+        <Icon name="material-symbols:menu-book" class="text-6xl mb-4 opacity-50" />
+        <p class="text-lg">{i18n(I18nKey.novelsNoItems)}</p>
+      </div>
+    </div>
+  </div>
+
+  <script slot="head" is:inline>
+    if (!customElements.get("novel-filter")) {
+      class NovelFilter extends HTMLElement {
+        constructor() {
+          super();
+        }
+
+        connectedCallback() {
+          this.addEventListener("click", this.handleClick);
+        }
+
+        disconnectedCallback() {
+          this.removeEventListener("click", this.handleClick);
+        }
+
+        handleClick(e) {
+          var target = e.target;
+          var button = target.closest("button");
+          if (!button) return;
+
+          var selectedTag = button.dataset.tag;
+          var filters = this.querySelectorAll("button");
+          var container = this.closest(".card-base");
+          if (!container) return;
+
+          var cards = container.querySelectorAll(".novel-card");
+
+          filters.forEach(function (f) {
+            f.classList.remove("bg-(--primary)", "text-white");
+            f.classList.remove("hover:bg-(--primary)");
+            f.classList.add("bg-(--btn-regular-bg)", "text-(--btn-content)");
+            f.classList.add("hover:bg-(--btn-regular-bg-hover)");
+
+            if (f === button) {
+              f.classList.remove("bg-(--btn-regular-bg)", "text-(--btn-content)");
+              f.classList.remove("hover:bg-(--btn-regular-bg-hover)");
+              f.classList.add("bg-(--primary)", "text-white");
+              f.classList.add("hover:bg-(--primary)");
+            }
+          });
+
+          cards.forEach(function (card) {
+            var cardEl = card;
+            var tags = (cardEl.dataset.tags || "").split(",");
+            if (selectedTag === "all" || (selectedTag && tags.includes(selectedTag))) {
+              cardEl.style.display = "";
+              cardEl.classList.add("animate-fade-in-up");
+            } else {
+              cardEl.style.display = "none";
+              cardEl.classList.remove("animate-fade-in-up");
+            }
+          });
+        }
+      }
+      customElements.define("novel-filter", NovelFilter);
+    }
+
+    // Merge admin localStorage data
+    (function() {
+      try {
+        var raw = localStorage.getItem("firefly-admin-data");
+        if (!raw) return;
+        var data = JSON.parse(raw);
+        var adminItems = data.novels || [];
+        if (adminItems.length === 0) return;
+
+        var grid = document.getElementById("novel-grid");
+        var empty = document.getElementById("novel-empty");
+        if (!grid) return;
+
+        grid.classList.remove("hidden");
+        if (empty) empty.classList.add("hidden");
+
+        var statusMap = {
+          "ongoing": { label: "连载中", color: "bg-green-500" },
+          "completed": { label: "已完结", color: "bg-blue-500" }
+        };
+
+        var frag = document.createDocumentFragment();
+        adminItems.forEach(function(item) {
+          var s = statusMap[item.status] || statusMap["ongoing"];
+          var tags = item.tags || [];
+          var tagsHtml = tags.length > 0 ? '<div class="flex flex-wrap gap-1.5 mt-2">' + tags.slice(0, 3).map(function(t) { return '<span class="text-[0.65rem] px-1.5 py-0.5 rounded-full bg-(--btn-regular-bg) text-(--btn-content)">' + t + '</span>'; }).join("") + '</div>' : '';
+
+          var html = '<div class="novel-card group relative overflow-hidden rounded-xl transition-all duration-300 hover:shadow-lg hover:scale-[1.02] card-base" data-tags="' + tags.join(",") + '"><a href="/novels/' + item.id + '/" class="block"><div class="aspect-[3/4] relative overflow-hidden">' +
+            (item.cover ? '<img src="' + item.cover + '" alt="' + item.title + '" class="w-full h-full object-cover pointer-events-none transition-transform duration-500 group-hover:scale-105" loading="lazy" decoding="async" />' : '<div class="w-full h-full bg-gray-200 dark:bg-gray-700 flex items-center justify-center"><div class="text-gray-400 text-5xl">&#x1f4d6;</div></div>') +
+            '<div class="absolute top-2 left-2 px-2 py-1 rounded-full text-xs text-white font-medium ' + s.color + ' backdrop-blur-sm">' + s.label + '</div>' +
+            '<div class="absolute inset-0 bg-gradient-to-t from-black/70 via-black/20 to-transparent" /><div class="absolute bottom-0 left-0 right-0 p-4"><h3 class="font-bold text-base text-white line-clamp-2 drop-shadow-lg">' + item.title + '</h3>' +
+            '<p class="text-xs text-white/70 mt-0.5">' + (item.author || '未知作者') + '</p>' +
+            (item.description ? '<p class="text-xs text-white/60 line-clamp-2 mt-1">' + item.description + '</p>' : '') +
+            tagsHtml + '</div></div></a></div>';
+
+          var wrapper = document.createElement("div");
+          wrapper.innerHTML = html;
+          frag.appendChild(wrapper.firstChild);
+        });
+        grid.appendChild(frag);
+      } catch(e) { /* ignore */ }
+    })();
+  </script>
+</MainGridLayout>

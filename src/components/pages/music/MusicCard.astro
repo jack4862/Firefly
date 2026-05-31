@@ -1,0 +1,92 @@
+---
+import I18nKey from "@/i18n/i18nKey";
+import { i18n } from "@/i18n/translation";
+import type { MusicLibraryItem } from "@/types/config";
+
+interface Props extends MusicLibraryItem {}
+
+const { title, artist, album, cover, tags, url, lrc, sourceLink, duration } = Astro.props;
+---
+
+<div
+  class="music-card group relative overflow-hidden rounded-xl transition-all duration-300 hover:shadow-lg card-base"
+  data-tags={tags?.join(",") || ""}
+  data-url={url}
+  data-title={title}
+  data-artist={artist}
+  data-cover={cover}
+  data-lrc={lrc || ""}
+>
+  <div class="flex gap-4 p-4">
+    <div class="relative w-24 h-24 flex-shrink-0 rounded-lg overflow-hidden">
+      {cover ? (
+        <img
+          src={cover}
+          alt={title}
+          class="w-full h-full object-cover transition-transform duration-500 group-hover:scale-105"
+          loading="lazy"
+          decoding="async"
+        />
+      ) : (
+        <div class="w-full h-full bg-gray-200 dark:bg-gray-700 flex items-center justify-center">
+          <div class="text-gray-400 text-3xl">&#x1f3b5;</div>
+        </div>
+      )}
+
+      <button
+        class="play-btn absolute inset-0 flex items-center justify-center bg-black/40 opacity-0 group-hover:opacity-100 transition-opacity duration-200 cursor-pointer"
+        data-url={url}
+        data-title={title}
+        data-artist={artist}
+        data-cover={cover}
+        data-lrc={lrc || ""}
+        aria-label={i18n(I18nKey.musicLibraryPlay)}
+      >
+        <div class="w-10 h-10 rounded-full bg-(--primary) flex items-center justify-center text-white shadow-lg">
+          <svg class="w-5 h-5 ml-0.5" viewBox="0 0 24 24" fill="currentColor">
+            <path d="M8 5v14l11-7z"/>
+          </svg>
+        </div>
+      </button>
+    </div>
+
+    <div class="flex flex-col justify-center min-w-0 flex-1">
+      <h3 class="font-bold text-base text-neutral-900 dark:text-neutral-100 line-clamp-1">
+        {title}
+      </h3>
+      <p class="text-sm text-neutral-600 dark:text-neutral-400 line-clamp-1 mt-0.5">
+        {artist}
+      </p>
+      {album && (
+        <p class="text-xs text-neutral-500 dark:text-neutral-500 line-clamp-1 mt-0.5">
+          {album}
+        </p>
+      )}
+
+      <div class="flex items-center gap-2 mt-2 flex-wrap">
+        {tags && tags.length > 0 && tags.slice(0, 3).map((tag) => (
+          <span class="text-[0.65rem] px-1.5 py-0.5 rounded-full bg-(--btn-regular-bg) text-(--btn-content)">
+            {tag}
+          </span>
+        ))}
+        {duration && (
+          <span class="text-xs text-neutral-400 ml-auto">{duration}</span>
+        )}
+      </div>
+    </div>
+
+    {sourceLink && (
+      <a
+        href={sourceLink}
+        target="_blank"
+        rel="noopener noreferrer"
+        class="self-center text-neutral-400 hover:text-(--primary) transition-colors"
+        aria-label="External link"
+      >
+        <svg class="w-4 h-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+          <path d="M18 13v6a2 2 0 01-2 2H5a2 2 0 01-2-2V8a2 2 0 012-2h6M15 3h6v6M10 14L21 3"/>
+        </svg>
+      </a>
+    )}
+  </div>
+</div>

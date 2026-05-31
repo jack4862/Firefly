@@ -36,7 +36,25 @@ const specCollection = defineCollection({
 	schema: z.object({}),
 });
 
+const novelsCollection = defineCollection({
+	loader: glob({ pattern: "**/*.{md,mdx}", base: "./src/content/novels" }),
+	schema: z.object({
+		type: z.enum(["novel", "chapter"]).optional().default("chapter"),
+		title: z.string(),
+		author: z.string().optional().default(""),
+		cover: z.string().optional().default(""),
+		description: z.string().optional().default(""),
+		tags: z.array(z.string()).optional().default([]),
+		status: z.enum(["ongoing", "completed"]).optional().default("ongoing"),
+		volume: z.string().optional().default(""),
+		volumeName: z.string().optional().default(""),
+		chapter: z.number().optional().default(0),
+		chapterTitle: z.string().optional().default(""),
+	}),
+});
+
 export const collections = {
 	posts: postsCollection,
 	spec: specCollection,
+	novels: novelsCollection,
 };

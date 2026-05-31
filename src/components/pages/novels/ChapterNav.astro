@@ -1,0 +1,40 @@
+---
+import type { ChapterInfo } from "@/utils/novel-utils";
+import { url } from "@/utils/url-utils";
+import I18nKey from "@/i18n/i18nKey";
+import { i18n } from "@/i18n/translation";
+
+interface Props {
+	novelId: string;
+	prev: ChapterInfo | null;
+	next: ChapterInfo | null;
+}
+
+const { novelId, prev, next } = Astro.props;
+---
+
+<div class="flex items-center justify-between mt-8 pt-6 border-t border-(--line-divider)">
+  {prev ? (
+    <a
+      href={url(`/novels/${novelId}/${prev.slug}/`)}
+      class="flex items-center gap-2 text-sm text-(--primary) hover:underline"
+    >
+      <svg class="w-4 h-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+        <polyline points="15 18 9 12 15 6"/>
+      </svg>
+      {i18n(I18nKey.novelsPrevChapter)}
+    </a>
+  ) : <div />}
+
+  {next ? (
+    <a
+      href={url(`/novels/${novelId}/${next.slug}/`)}
+      class="flex items-center gap-2 text-sm text-(--primary) hover:underline"
+    >
+      {i18n(I18nKey.novelsNextChapter)}
+      <svg class="w-4 h-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+        <polyline points="9 18 15 12 9 6"/>
+      </svg>
+    </a>
+  ) : <div />}
+</div>

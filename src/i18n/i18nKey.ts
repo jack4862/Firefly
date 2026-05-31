@@ -309,6 +309,62 @@ enum I18nKey {
 	passwordSubmit = "passwordSubmit",
 	passwordError = "passwordError",
 	passwordProtectedRss = "passwordProtectedRss",
+
+	// 小说书架
+	novels = "novels",
+	novelsDescription = "novelsDescription",
+	novelsNoNovels = "novelsNoNovels",
+	novelsAuthor = "novelsAuthor",
+	novelsStatusOngoing = "novelsStatusOngoing",
+	novelsStatusCompleted = "novelsStatusCompleted",
+	novelsChapters = "novelsChapters",
+	novelsChapterCount = "novelsChapterCount",
+	novelsBackToNovel = "novelsBackToNovel",
+	novelsTableOfContents = "novelsTableOfContents",
+	novelsPrevChapter = "novelsPrevChapter",
+	novelsNextChapter = "novelsNextChapter",
+
+	// 音乐库
+	musicLibrary = "musicLibrary",
+	musicLibraryDescription = "musicLibraryDescription",
+	musicLibraryNoItems = "musicLibraryNoItems",
+	musicLibraryPlay = "musicLibraryPlay",
+	musicLibraryArtist = "musicLibraryArtist",
+	musicLibraryAlbum = "musicLibraryAlbum",
+
+	// 动画收藏
+	anime = "anime",
+	animeDescription = "animeDescription",
+	animeNoItems = "animeNoItems",
+	animeRating = "animeRating",
+	animeStatusWatching = "animeStatusWatching",
+	animeStatusCompleted = "animeStatusCompleted",
+	animeStatusOnHold = "animeStatusOnHold",
+	animeStatusDropped = "animeStatusDropped",
+	animeStatusPlanToWatch = "animeStatusPlanToWatch",
+	animeEpisodes = "animeEpisodes",
+	animeFilterAll = "animeFilterAll",
+
+	// 后台管理
+	admin = "admin",
+	adminDescription = "adminDescription",
+	adminAnime = "adminAnime",
+	adminMusic = "adminMusic",
+	adminNovels = "adminNovels",
+	adminAdd = "adminAdd",
+	adminEdit = "adminEdit",
+	adminDelete = "adminDelete",
+	adminSave = "adminSave",
+	adminCancel = "adminCancel",
+	adminExport = "adminExport",
+	adminImport = "adminImport",
+	adminImportReplace = "adminImportReplace",
+	adminImportMerge = "adminImportMerge",
+	adminNoItems = "adminNoItems",
+	adminDeleteConfirm = "adminDeleteConfirm",
+	adminExportSuccess = "adminExportSuccess",
+	adminImportSuccess = "adminImportSuccess",
+	adminImportError = "adminImportError",
 }
 
 export default I18nKey;

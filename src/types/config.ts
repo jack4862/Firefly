@@ -86,6 +86,10 @@ export type SiteConfig = {
 		guestbook: boolean; // 留言板页面开关
 		bangumi: boolean;
 		gallery: boolean; // 相册页面开关
+		novels: boolean; // 小说书架页面开关
+		musicLibrary: boolean; // 音乐库页面开关
+		anime: boolean; // 动画收藏页面开关
+		admin: boolean; // 后台管理页面开关
 	};
 
 	// 分类导航栏开关
@@ -179,6 +183,9 @@ export enum LinkPreset {
 	Guestbook = 5,
 	Bangumi = 6,
 	Gallery = 7,
+	Novels = 8,
+	MusicLibrary = 9,
+	Anime = 10,
 }
 
 export type NavBarLink = {
@@ -420,7 +427,8 @@ export type WidgetComponentType =
 	| "advertisement"
 	| "stats"
 	| "calendar"
-	| "music";
+	| "music"
+	| "nowPlaying";
 
 export type WidgetComponentConfig = {
 	type: WidgetComponentType; // 组件类型
@@ -814,4 +822,61 @@ export type GalleryAlbum = {
 export type GalleryConfig = {
 	albums: GalleryAlbum[];
 	columnWidth?: number; // 瀑布流最小列宽(px)，默认 240，浏览器根据容器宽度自动计算列数
+};
+
+// 小说配置
+export type NovelConfig = {
+	itemsPerPage?: number; // 每页显示数量，默认 12
+	showTags?: boolean; // 是否显示标签，默认 true
+};
+
+// 音乐库条目
+export type MusicLibraryItem = {
+	id: string; // 唯一标识
+	title: string; // 歌曲名称
+	artist: string; // 艺术家
+	album?: string; // 专辑名称
+	cover: string; // 封面图片路径
+	tags?: string[]; // 标签/流派
+	description?: string; // 描述
+	url: string; // 音频文件路径
+	lrc?: string; // 歌词路径或内容
+	sourceLink?: string; // 外部链接
+	duration?: string; // 时长显示文本
+};
+
+// 音乐库配置
+export type MusicLibraryConfig = {
+	items: MusicLibraryItem[];
+	itemsPerPage?: number; // 每页显示数量，默认 12
+	defaultView?: "grid" | "list"; // 默认视图模式
+};
+
+// 动画状态
+export type AnimeStatus = "watching" | "completed" | "on-hold" | "dropped" | "plan-to-watch";
+
+// 动画条目
+export type AnimeItem = {
+	id: string; // 唯一标识
+	title: string; // 动画标题
+	titleJa?: string; // 日文标题
+	cover: string; // 封面图片路径
+	synopsis?: string; // 简介
+	rating?: number; // 评分 1-10
+	status: AnimeStatus; // 观看状态
+	year?: number; // 年份
+	tags?: string[]; // 标签/类型
+	episodes?: {
+		watched: number; // 已看集数
+		total: number; // 总集数
+	};
+	link?: string; // 外部链接
+	dateAdded?: string; // 添加日期 (ISO)
+};
+
+// 动画收藏配置
+export type AnimeConfig = {
+	items: AnimeItem[];
+	itemsPerPage?: number; // 每页显示数量，默认 12
+	defaultSort?: "rating" | "year" | "dateAdded" | "title"; // 默认排序
 };

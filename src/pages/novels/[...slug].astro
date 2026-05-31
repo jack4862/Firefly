@@ -1,0 +1,145 @@
+---
+import ChapterNav from "@/components/pages/novels/ChapterNav.astro";
+import VolumeTree from "@/components/pages/novels/VolumeTree.astro";
+import { siteConfig } from "@/config";
+import I18nKey from "@/i18n/i18nKey";
+import { i18n } from "@/i18n/translation";
+import MainGridLayout from "@/layouts/MainGridLayout.astro";
+import { getNovels, getNovelChapters, getChapterNav, getNovelVolumes } from "@/utils/novel-utils";
+import { getEntry, render } from "astro:content";
+
+if (!siteConfig.pages.novels) {
+	return Astro.redirect("/404/");
+}
+
+export async function getStaticPaths() {
+	const novels = await getNovels();
+	const paths: Array<{ params: { slug: string }; props: Record<string, unknown> }> = [];
+
+	for (const novel of novels) {
+		const chapters = await getNovelChapters(novel.id);
+		const volumes = await getNovelVolumes(novel.id);
+
+		// Novel detail page
+		paths.push({
+			params: { slug: novel.id },
+			props: {
+				type: "detail",
+				novel: novel,
+				chapters: chapters,
+				volumes: volumes,
+			},
+		});
+
+		// Chapter pages
+		for (const chapter of chapters) {
+			const chapterNav = await getChapterNav(novel.id, chapter.slug);
+			paths.push({
+				params: { slug: `${novel.id}/${chapter.slug}` },
+				props: {
+					type: "chapter",
+					novel: novel,
+					chapter: chapter,
+					chapters: chapters,
+					chapterNav: chapterNav,
+				},
+			});
+		}
+	}
+
+	return paths;
+}
+
+const props = Astro.props as Record<string, unknown>;
+const pageType = props.type as string;
+const isDetail = pageType === "detail";
+
+const novel = props.novel as { id: string; title: string; author: string; cover: string; description: string; tags: string[]; status: string; chapterCount: number };
+const chapters = props.chapters as Array<{ id: string; slug: string; volume: string; volumeName: string; chapter: number; chapterTitle: string }>;
+
+let title = novel.title;
+let description = novel.description;
+
+if (!isDetail) {
+	const chapter = props.chapter as typeof chapters[0];
+	title = `${chapter.chapterTitle || chapter.slug} - ${novel.title}`;
+	description = `${novel.title} - ${chapter.chapterTitle || chapter.slug}`;
+}
+
+const volumes = isDetail ? (props.volumes as Array<{ volume: string; volumeName: string; chapters: typeof chapters }>) : [];
+const chapterData = !isDetail ? (props.chapter as typeof chapters[0]) : null;
+const chapterNav = !isDetail ? (props.chapterNav as { prev: typeof chapters[0] | null; next: typeof chapters[0] | null }) : null;
+
+// Get the rendered content for chapter pages
+let ChapterContent: any = null;
+if (!isDetail && chapterData) {
+	const entry = await getEntry("novels", chapterData.id);
+	if (entry) {
+		const rendered = await render(entry);
+		ChapterContent = rendered.Content;
+	}
+}
+---
+
+<MainGridLayout title={title} description={description}>
+  <div class="flex w-full rounded-(--radius-large) overflow-hidden relative min-h-32">
+    <div class="card-base z-10 px-9 py-6 relative w-full">
+      {isDetail ? (
+        <>
+          <div class="flex flex-col md:flex-row gap-6 mb-6">
+            {novel.cover && (
+              <div class="w-48 flex-shrink-0">
+                <img src={novel.cover} alt={title} class="w-full rounded-lg shadow-lg" loading="lazy" decoding="async" />
+              </div>
+            )}
+            <div class="flex-1">
+              <h1 class="text-3xl font-bold text-neutral-900 dark:text-neutral-100 mb-2">{novel.title}</h1>
+              <p class="text-base text-neutral-600 dark:text-neutral-400 mb-1">{novel.author}</p>
+              {novel.status && (
+                <span class={`inline-block px-2 py-0.5 rounded-full text-xs text-white ${novel.status === 'completed' ? 'bg-blue-500' : 'bg-green-500'}`}>
+                  {novel.status === 'completed' ? i18n(I18nKey.novelsStatusCompleted) : i18n(I18nKey.novelsStatusOngoing)}
+                </span>
+              )}
+              {novel.tags && novel.tags.length > 0 && (
+                <div class="flex flex-wrap gap-1.5 mt-2">
+                  {novel.tags.map((tag: string) => (
+                    <span class="text-xs px-2 py-0.5 rounded-full bg-(--btn-regular-bg) text-(--btn-content)">{tag}</span>
+                  ))}
+                </div>
+              )}
+              {novel.description && (
+                <p class="text-sm text-neutral-600 dark:text-neutral-400 mt-3 leading-relaxed">{novel.description}</p>
+              )}
+              <p class="text-sm text-neutral-500 mt-2">{i18n(I18nKey.novelsChapterCount).replace('{count}', String(novel.chapterCount))}</p>
+            </div>
+          </div>
+
+          <div class="border-t border-neutral-200 dark:border-neutral-700 pt-4">
+            <h2 class="text-xl font-bold text-neutral-900 dark:text-neutral-100 mb-4">{i18n(I18nKey.novelsTableOfContents)}</h2>
+            <VolumeTree volumes={volumes} novelId={novel.id} />
+          </div>
+        </>
+      ) : (
+        <>
+          <div class="mb-4">
+            <a href={`/novels/${novel.id}/`} class="text-sm text-(--primary) hover:underline mb-2 inline-block">
+              &larr; {novel.title}
+            </a>
+            <h1 class="text-2xl font-bold text-neutral-900 dark:text-neutral-100">{chapterData!.chapterTitle || chapterData!.slug}</h1>
+            {chapterData!.volumeName && (
+              <p class="text-sm text-neutral-500 mt-1">{chapterData!.volumeName}</p>
+            )}
+          </div>
+
+          <article class="prose dark:prose-invert max-w-none">
+            {ChapterContent && <ChapterContent />}
+          </article>
+
+          <div class="border-t border-neutral-200 dark:border-neutral-700 mt-8 pt-4">
+            <ChapterNav prev={chapterNav!.prev} next={chapterNav!.next} novelId={novel.id} />
+          </div>
+        </>
+      )}
+    </div>
+  </div>
+</MainGridLayout>

@@ -434,7 +434,24 @@ const managerConfigStr = JSON.stringify({
         seek: seek,
         seekToTime: seekToTime,
         playTrackByIndex: playTrackByIndex,
-        loadTrack: loadTrack
+        loadTrack: loadTrack,
+        loadAndPlayTrack: function (trackData) {
+            var existingIndex = state.playlist.findIndex(function (t) {
+                return t.url === trackData.url;
+            });
+            if (existingIndex >= 0) {
+                loadTrack(existingIndex, true);
+            } else {
+                state.playlist.push(trackData);
+                loadTrack(state.playlist.length - 1, true);
+                emit('fm:init', {
+                    playlist: state.playlist,
+                    playMode: state.playMode,
+                    volume: state.volume,
+                    isMuted: state.isMuted
+                });
+            }
+        }
     };
 })();
 </script>

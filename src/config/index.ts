@@ -3,6 +3,9 @@
 
 // 类型导出
 export type {
+	AnimeConfig,
+	AnimeItem,
+	AnimeStatus,
 	AnnouncementConfig,
 	BackgroundWallpaperConfig,
 	CommentConfig,
@@ -12,8 +15,11 @@ export type {
 	GalleryAlbum,
 	GalleryConfig,
 	LicenseConfig,
+	MusicLibraryConfig,
+	MusicLibraryItem,
 	MusicPlayerConfig,
 	NavBarConfig,
+	NovelConfig,
 	PlantUMLConfig,
 	ProfileConfig,
 	SakuraConfig,
@@ -50,3 +56,6 @@ export { sidebarLayoutConfig } from "./sidebarConfig"; // 侧边栏布局配置
 // 核心配置
 export { siteConfig } from "./siteConfig"; // 站点基础配置
 export { sponsorConfig } from "./sponsorConfig"; // 赞助配置
+export { animeConfig } from "./animeConfig"; // 动画收藏配置
+export { musicLibraryConfig } from "./musicLibraryConfig"; // 音乐库配置
+export { novelConfig } from "./novelConfig"; // 小说配置

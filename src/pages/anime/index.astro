@@ -1,0 +1,225 @@
+---
+import { Icon } from "astro-icon/components";
+import AnimeCard from "@/components/pages/anime/AnimeCard.astro";
+import { animeConfig, siteConfig } from "@/config";
+import I18nKey from "@/i18n/i18nKey";
+import { i18n } from "@/i18n/translation";
+import MainGridLayout from "@/layouts/MainGridLayout.astro";
+
+if (!siteConfig.pages.anime) {
+	return Astro.redirect("/404/");
+}
+
+const title = i18n(I18nKey.anime);
+const description = i18n(I18nKey.animeDescription);
+
+const items = animeConfig.items;
+
+const allTags = [...new Set(items.flatMap((a) => a.tags || []))].sort();
+
+const statusOptions = [
+	{ key: "all", label: i18n(I18nKey.animeFilterAll) },
+	{ key: "watching", label: i18n(I18nKey.animeStatusWatching) },
+	{ key: "completed", label: i18n(I18nKey.animeStatusCompleted) },
+	{ key: "on-hold", label: i18n(I18nKey.animeStatusOnHold) },
+	{ key: "dropped", label: i18n(I18nKey.animeStatusDropped) },
+	{ key: "plan-to-watch", label: i18n(I18nKey.animeStatusPlanToWatch) },
+];
+---
+
+<MainGridLayout title={title} description={description}>
+  <div
+    class="flex w-full rounded-(--radius-large) overflow-hidden relative min-h-32"
+  >
+    <div class="card-base z-10 px-9 py-6 relative w-full">
+      <div class="mb-4">
+        <div class="flex items-center gap-3 mb-3">
+          <div
+            class="h-8 w-8 rounded-lg bg-(--primary) flex items-center justify-center text-white dark:text-black/70"
+          >
+            <Icon name="material-symbols:animation" class="text-[1.5rem]" />
+          </div>
+          <div class="text-3xl font-bold text-neutral-900 dark:text-neutral-100">
+            {title}
+          </div>
+        </div>
+        {description && (
+          <p class="text-base text-neutral-600 dark:text-neutral-400 leading-relaxed mb-4">
+            {description}
+          </p>
+        )}
+      </div>
+
+      {items.length > 0 && (
+        <anime-filter class="block mb-4">
+          <div class="flex flex-wrap gap-2 mb-3" data-filter-type="status">
+            {statusOptions.map((opt) => (
+              <button
+                data-status={opt.key}
+                class={`btn-regular px-3 py-1.5 rounded-lg transition-colors duration-200 text-sm font-medium ${opt.key === "all" ? "bg-(--primary) text-white hover:bg-(--primary)" : "bg-(--btn-regular-bg) text-(--btn-content) hover:bg-(--btn-regular-bg-hover)"}`}
+              >
+                {opt.label}
+              </button>
+            ))}
+          </div>
+
+          {allTags.length > 0 && (
+            <div class="flex flex-wrap gap-2" data-filter-type="tag">
+              <button
+                data-tag="all"
+                class="btn-regular px-3 py-1.5 rounded-lg bg-(--primary) text-white hover:bg-(--primary) transition-colors duration-200 text-sm font-medium"
+              >
+                {i18n(I18nKey.all)}
+              </button>
+              {allTags.map((tag) => (
+                <button
+                  data-tag={tag}
+                  class="btn-regular px-3 py-1.5 rounded-lg bg-(--btn-regular-bg) text-(--btn-content) hover:bg-(--btn-regular-bg-hover) transition-colors duration-200 text-sm font-medium"
+                >
+                  {tag}
+                </button>
+              ))}
+            </div>
+          )}
+        </anime-filter>
+      )}
+
+      <div id="anime-grid" class={`grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-4 xl:grid-cols-5 gap-4 my-4 ${items.length === 0 ? 'hidden' : ''}`}>
+        {items.map((item) => (
+          <AnimeCard {...item} />
+        ))}
+      </div>
+      <div id="anime-empty" class={`flex flex-col items-center justify-center py-16 text-neutral-400 dark:text-neutral-500 ${items.length > 0 ? 'hidden' : ''}`}>
+        <Icon name="material-symbols:animation" class="text-6xl mb-4 opacity-50" />
+        <p class="text-lg">{i18n(I18nKey.animeNoItems)}</p>
+      </div>
+    </div>
+  </div>
+
+  <script slot="head" is:inline>
+    if (!customElements.get("anime-filter")) {
+      class AnimeFilter extends HTMLElement {
+        constructor() {
+          super();
+          this._activeStatus = "all";
+          this._activeTag = "all";
+        }
+
+        connectedCallback() {
+          this.addEventListener("click", this.handleClick);
+        }
+
+        disconnectedCallback() {
+          this.removeEventListener("click", this.handleClick);
+        }
+
+        handleClick(e) {
+          const target = e.target;
+          const button = target.closest("button");
+          if (!button) return;
+
+          const statusGroup = button.closest('[data-filter-type="status"]');
+          const tagGroup = button.closest('[data-filter-type="tag"]');
+
+          if (statusGroup) {
+            this._activeStatus = button.dataset.status || "all";
+            this.updateButtons(statusGroup, button, "status");
+          } else if (tagGroup) {
+            this._activeTag = button.dataset.tag || "all";
+            this.updateButtons(tagGroup, button, "tag");
+          }
+
+          this.filterCards();
+        }
+
+        updateButtons(group, activeButton) {
+          const buttons = group.querySelectorAll("button");
+          buttons.forEach((f) => {
+            f.classList.remove("bg-(--primary)", "text-white");
+            f.classList.remove("hover:bg-(--primary)");
+            f.classList.add("bg-(--btn-regular-bg)", "text-(--btn-content)");
+            f.classList.add("hover:bg-(--btn-regular-bg-hover)");
+          });
+          activeButton.classList.remove("bg-(--btn-regular-bg)", "text-(--btn-content)");
+          activeButton.classList.remove("hover:bg-(--btn-regular-bg-hover)");
+          activeButton.classList.add("bg-(--primary)", "text-white");
+          activeButton.classList.add("hover:bg-(--primary)");
+        }
+
+        filterCards() {
+          const container = this.closest(".card-base");
+          if (!container) return;
+
+          const cards = container.querySelectorAll(".anime-card");
+          cards.forEach((card) => {
+            const cardEl = card;
+            const cardStatus = cardEl.dataset.status;
+            const cardTags = (cardEl.dataset.tags || "").split(",");
+
+            const statusMatch = this._activeStatus === "all" || cardStatus === this._activeStatus;
+            const tagMatch = this._activeTag === "all" || cardTags.includes(this._activeTag);
+
+            if (statusMatch && tagMatch) {
+              cardEl.style.display = "";
+              cardEl.classList.add("animate-fade-in-up");
+            } else {
+              cardEl.style.display = "none";
+              cardEl.classList.remove("animate-fade-in-up");
+            }
+          });
+        }
+      }
+      customElements.define("anime-filter", AnimeFilter);
+    }
+
+    // Merge admin localStorage data
+    (function() {
+      try {
+        var raw = localStorage.getItem("firefly-admin-data");
+        if (!raw) return;
+        var data = JSON.parse(raw);
+        var adminItems = data.anime || [];
+        if (adminItems.length === 0) return;
+
+        var grid = document.getElementById("anime-grid");
+        var empty = document.getElementById("anime-empty");
+        if (!grid) return;
+
+        grid.classList.remove("hidden");
+        if (empty) empty.classList.add("hidden");
+
+        var statusMap = {
+          "watching": { label: "在看", color: "bg-green-500" },
+          "completed": { label: "看完", color: "bg-blue-500" },
+          "on-hold": { label: "搁置", color: "bg-yellow-500" },
+          "dropped": { label: "抛弃", color: "bg-red-500" },
+          "plan-to-watch": { label: "想看", color: "bg-purple-500" }
+        };
+
+        var frag = document.createDocumentFragment();
+        adminItems.forEach(function(item) {
+          var s = statusMap[item.status] || statusMap["plan-to-watch"];
+          var tags = item.tags || [];
+          var ratingHtml = item.rating > 0 ? '<div class="absolute top-2 right-2 px-2 py-1 rounded-full text-xs text-white font-medium bg-black/50 backdrop-blur-sm flex items-center gap-1"><svg class="w-3 h-3 text-yellow-400" viewBox="0 0 24 24" fill="currentColor"><path d="M12 2l3.09 6.26L22 9.27l-5 4.87 1.18 6.88L12 17.77l-6.18 3.25L7 14.14 2 9.27l6.91-1.01L12 2z"/></svg>' + item.rating + '</div>' : '';
+          var tagsHtml = tags.length > 0 ? '<div class="flex flex-wrap gap-1 mt-2">' + tags.slice(0, 3).map(function(t) { return '<span class="text-[0.6rem] px-1.5 py-0.5 rounded bg-white/20 text-white/90 backdrop-blur-sm">' + t + '</span>'; }).join("") + '</div>' : '';
+          var epHtml = item.episodes ? '<span>' + item.episodes.watched + '/' + item.episodes.total + ' 集</span>' : '';
+          var synopsisHtml = item.synopsis ? '<div class="absolute inset-0 bg-black/85 opacity-0 group-hover:opacity-100 transition-opacity duration-300 flex items-center justify-center p-4 pointer-events-none"><p class="text-white text-sm leading-relaxed line-clamp-6">' + item.synopsis + '</p></div>' : '';
+          var linkAttr = item.link ? ' href="' + item.link + '" target="_blank" rel="noopener noreferrer"' : ' href="#"';
+
+          var html = '<div class="anime-card group relative overflow-hidden rounded-xl transition-all duration-300 hover:shadow-lg hover:scale-[1.02] card-base" data-tags="' + tags.join(",") + '" data-status="' + item.status + '" data-rating="' + (item.rating || 0) + '" data-year="' + (item.year || 0) + '"><a' + linkAttr + ' class="block"><div class="aspect-[3/4] relative overflow-hidden">' +
+            (item.cover ? '<img src="' + item.cover + '" alt="' + item.title + '" class="w-full h-full object-cover pointer-events-none transition-transform duration-500 group-hover:scale-105" loading="lazy" decoding="async" />' : '<div class="w-full h-full bg-gray-200 dark:bg-gray-700 flex items-center justify-center"><div class="text-gray-400 text-5xl">&#x1f3ac;</div></div>') +
+            '<div class="absolute top-2 left-2 px-2 py-1 rounded-full text-xs text-white font-medium ' + s.color + ' backdrop-blur-sm">' + s.label + '</div>' +
+            ratingHtml +
+            '<div class="absolute inset-0 bg-gradient-to-t from-black/70 via-black/20 to-transparent" /><div class="absolute bottom-0 left-0 right-0 p-4"><h3 class="font-bold text-base text-white line-clamp-2 drop-shadow-lg">' + item.title + '</h3>' +
+            (item.titleJa ? '<p class="text-xs text-white/60 line-clamp-1 mt-0.5">' + item.titleJa + '</p>' : '') +
+            '<div class="flex items-center gap-3 text-xs text-white/70 mt-1.5 flex-wrap">' + (item.year ? '<span>' + item.year + '</span>' : '') + epHtml + '</div>' + tagsHtml + '</div></div></a>' + synopsisHtml + '</div>';
+
+          var wrapper = document.createElement("div");
+          wrapper.innerHTML = html;
+          frag.appendChild(wrapper.firstChild);
+        });
+        grid.appendChild(frag);
+      } catch(e) { /* ignore */ }
+    })();
+  </script>
+</MainGridLayout>

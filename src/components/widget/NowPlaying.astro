@@ -1,0 +1,43 @@
+---
+import I18nKey from "@/i18n/i18nKey";
+import { i18n } from "@/i18n/translation";
+---
+
+<div id="now-playing-widget" class="hidden">
+  <div class="flex items-center gap-3 p-3">
+    <div id="np-cover" class="w-12 h-12 rounded-lg overflow-hidden flex-shrink-0 bg-(--btn-regular-bg)">
+      <div class="w-full h-full flex items-center justify-center text-neutral-400 text-xl">&#x1f3b5;</div>
+    </div>
+    <div class="flex-1 min-w-0">
+      <p id="np-title" class="text-sm font-medium text-neutral-900 dark:text-neutral-100 line-clamp-1">
+        {i18n(I18nKey.musicNoPlaying)}
+      </p>
+      <p id="np-artist" class="text-xs text-neutral-500 line-clamp-1"></p>
+    </div>
+  </div>
+</div>
+
+<script is:inline>
+(function() {
+  var widget = document.getElementById("now-playing-widget");
+  var coverEl = document.getElementById("np-cover");
+  var titleEl = document.getElementById("np-title");
+  var artistEl = document.getElementById("np-artist");
+
+  if (!widget) return;
+
+  function updateNowPlaying(detail) {
+    if (!detail || !detail.name) return;
+    widget.classList.remove("hidden");
+    titleEl.textContent = detail.name;
+    artistEl.textContent = detail.artist || "";
+    if (detail.pic) {
+      coverEl.innerHTML = '<img src="' + detail.pic + '" alt="" class="w-full h-full object-cover" />';
+    }
+  }
+
+  window.addEventListener("fm:track", function(e) {
+    if (e.detail) updateNowPlaying(e.detail);
+  });
+})();
+</script>

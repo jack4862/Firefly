@@ -43,4 +43,19 @@ export const LinkPresets: { [key in LinkPreset]: NavBarLink } = {
 		url: "/gallery/",
 		icon: "material-symbols:photo-library",
 	},
+	[LinkPreset.Novels]: {
+		name: i18n(I18nKey.novels),
+		url: "/novels/",
+		icon: "material-symbols:menu-book",
+	},
+	[LinkPreset.MusicLibrary]: {
+		name: i18n(I18nKey.musicLibrary),
+		url: "/music/",
+		icon: "material-symbols:library-music",
+	},
+	[LinkPreset.Anime]: {
+		name: i18n(I18nKey.anime),
+		url: "/anime/",
+		icon: "material-symbols:animation",
+	},
 };

@@ -62,6 +62,13 @@ declare global {
 			seekToTime: (time: number) => void;
 			playTrackByIndex: (index: number) => void;
 			loadTrack: (index: number, autoPlay: boolean) => void;
+			loadAndPlayTrack: (trackData: {
+				name: string;
+				artist: string;
+				url: string;
+				pic?: string;
+				lrc?: string;
+			}) => void;
 		};
 	}
 

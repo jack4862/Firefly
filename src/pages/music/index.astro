@@ -1,0 +1,199 @@
+---
+import { Icon } from "astro-icon/components";
+import MusicCard from "@/components/pages/music/MusicCard.astro";
+import { musicLibraryConfig, siteConfig } from "@/config";
+import I18nKey from "@/i18n/i18nKey";
+import { i18n } from "@/i18n/translation";
+import MainGridLayout from "@/layouts/MainGridLayout.astro";
+
+if (!siteConfig.pages.musicLibrary) {
+	return Astro.redirect("/404/");
+}
+
+const title = i18n(I18nKey.musicLibrary);
+const description = i18n(I18nKey.musicLibraryDescription);
+
+const items = musicLibraryConfig.items;
+
+const allTags = [...new Set(items.flatMap((a) => a.tags || []))].sort();
+---
+
+<MainGridLayout title={title} description={description}>
+  <div
+    class="flex w-full rounded-(--radius-large) overflow-hidden relative min-h-32"
+  >
+    <div class="card-base z-10 px-9 py-6 relative w-full">
+      <div class="mb-4">
+        <div class="flex items-center gap-3 mb-3">
+          <div
+            class="h-8 w-8 rounded-lg bg-(--primary) flex items-center justify-center text-white dark:text-black/70"
+          >
+            <Icon name="material-symbols:library-music" class="text-[1.5rem]" />
+          </div>
+          <div class="text-3xl font-bold text-neutral-900 dark:text-neutral-100">
+            {title}
+          </div>
+        </div>
+        {description && (
+          <p class="text-base text-neutral-600 dark:text-neutral-400 leading-relaxed mb-4">
+            {description}
+          </p>
+        )}
+      </div>
+
+      {items.length > 0 && allTags.length > 0 && (
+        <music-filter class="flex flex-wrap gap-2 mb-6">
+          <button
+            data-tag="all"
+            class="btn-regular px-3 py-1.5 rounded-lg bg-(--primary) text-white hover:bg-(--primary) transition-colors duration-200 text-sm font-medium"
+          >
+            {i18n(I18nKey.all)}
+          </button>
+          {allTags.map((tag) => (
+            <button
+              data-tag={tag}
+              class="btn-regular px-3 py-1.5 rounded-lg bg-(--btn-regular-bg) text-(--btn-content) hover:bg-(--btn-regular-bg-hover) transition-colors duration-200 text-sm font-medium"
+            >
+              {tag}
+            </button>
+          ))}
+        </music-filter>
+      )}
+
+      <div id="music-grid" class={`grid grid-cols-1 lg:grid-cols-2 gap-3 my-4 ${items.length === 0 ? 'hidden' : ''}`}>
+        {items.map((item) => (
+          <MusicCard {...item} />
+        ))}
+      </div>
+      <div id="music-empty" class={`flex flex-col items-center justify-center py-16 text-neutral-400 dark:text-neutral-500 ${items.length > 0 ? 'hidden' : ''}`}>
+        <Icon name="material-symbols:library-music" class="text-6xl mb-4 opacity-50" />
+        <p class="text-lg">{i18n(I18nKey.musicLibraryNoItems)}</p>
+      </div>
+    </div>
+  </div>
+
+  <script slot="head" is:inline>
+    if (!customElements.get("music-filter")) {
+      class MusicFilter extends HTMLElement {
+        constructor() {
+          super();
+        }
+
+        connectedCallback() {
+          this.addEventListener("click", this.handleClick);
+        }
+
+        disconnectedCallback() {
+          this.removeEventListener("click", this.handleClick);
+        }
+
+        handleClick(e) {
+          var target = e.target;
+          var button = target.closest("button");
+          if (!button) return;
+
+          var selectedTag = button.dataset.tag;
+          var filters = this.querySelectorAll("button");
+          var container = this.closest(".card-base");
+          if (!container) return;
+
+          var cards = container.querySelectorAll(".music-card");
+
+          filters.forEach(function (f) {
+            f.classList.remove("bg-(--primary)", "text-white");
+            f.classList.remove("hover:bg-(--primary)");
+            f.classList.add("bg-(--btn-regular-bg)", "text-(--btn-content)");
+            f.classList.add("hover:bg-(--btn-regular-bg-hover)");
+
+            if (f === button) {
+              f.classList.remove("bg-(--btn-regular-bg)", "text-(--btn-content)");
+              f.classList.remove("hover:bg-(--btn-regular-bg-hover)");
+              f.classList.add("bg-(--primary)", "text-white");
+              f.classList.add("hover:bg-(--primary)");
+            }
+          });
+
+          cards.forEach(function (card) {
+            var cardEl = card;
+            var tags = (cardEl.dataset.tags || "").split(",");
+            if (selectedTag === "all" || (selectedTag && tags.includes(selectedTag))) {
+              cardEl.style.display = "";
+              cardEl.classList.add("animate-fade-in-up");
+            } else {
+              cardEl.style.display = "none";
+              cardEl.classList.remove("animate-fade-in-up");
+            }
+          });
+        }
+      }
+      customElements.define("music-filter", MusicFilter);
+    }
+
+    // Play button click handler
+    document.addEventListener("click", function (e) {
+      var btn = e.target.closest(".play-btn");
+      if (!btn) return;
+      e.preventDefault();
+      e.stopPropagation();
+
+      if (!window.__fireflyMusic) return;
+
+      var trackUrl = btn.dataset.url;
+      var isFullUrl = /^https?:\/\//.test(trackUrl);
+      var resolvedUrl = isFullUrl ? trackUrl : (window.__fireflyMusic.getState().config.siteUrl || "") + trackUrl;
+
+      var coverUrl = btn.dataset.cover || "";
+      var isFullCoverUrl = /^https?:\/\//.test(coverUrl);
+      var resolvedCover = isFullCoverUrl ? coverUrl : (coverUrl ? (window.__fireflyMusic.getState().config.siteUrl || "") + coverUrl : "");
+
+      var lrcUrl = btn.dataset.lrc || "";
+      var isFullLrcUrl = /^https?:\/\//.test(lrcUrl);
+      var resolvedLrc = isFullLrcUrl ? lrcUrl : (lrcUrl ? (window.__fireflyMusic.getState().config.siteUrl || "") + lrcUrl : "");
+
+      window.__fireflyMusic.loadAndPlayTrack({
+        name: btn.dataset.title,
+        artist: btn.dataset.artist,
+        url: resolvedUrl,
+        pic: resolvedCover,
+        lrc: resolvedLrc
+      });
+    });
+
+    // Merge admin localStorage data
+    (function() {
+      try {
+        var raw = localStorage.getItem("firefly-admin-data");
+        if (!raw) return;
+        var data = JSON.parse(raw);
+        var adminItems = data.music || [];
+        if (adminItems.length === 0) return;
+
+        var grid = document.getElementById("music-grid");
+        var empty = document.getElementById("music-empty");
+        if (!grid) return;
+
+        grid.classList.remove("hidden");
+        if (empty) empty.classList.add("hidden");
+
+        var frag = document.createDocumentFragment();
+        adminItems.forEach(function(item) {
+          var tags = item.tags || [];
+          var tagsHtml = tags.length > 0 ? '<div class="flex items-center gap-2 mt-2 flex-wrap">' + tags.slice(0, 3).map(function(t) { return '<span class="text-[0.65rem] px-1.5 py-0.5 rounded-full bg-(--btn-regular-bg) text-(--btn-content)">' + t + '</span>'; }).join("") + (item.duration ? '<span class="text-xs text-neutral-400 ml-auto">' + item.duration + '</span>' : '') + '</div>' : (item.duration ? '<div class="flex items-center gap-2 mt-2"><span class="text-xs text-neutral-400 ml-auto">' + item.duration + '</span></div>' : '');
+          var linkHtml = item.sourceLink ? '<a href="' + item.sourceLink + '" target="_blank" rel="noopener noreferrer" class="self-center text-neutral-400 hover:text-(--primary) transition-colors" aria-label="External link"><svg class="w-4 h-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M18 13v6a2 2 0 01-2 2H5a2 2 0 01-2-2V8a2 2 0 012-2h6M15 3h6v6M10 14L21 3"/></svg></a>' : '';
+
+          var html = '<div class="music-card group relative overflow-hidden rounded-xl transition-all duration-300 hover:shadow-lg card-base" data-tags="' + tags.join(",") + '" data-url="' + item.url + '" data-title="' + item.title + '" data-artist="' + item.artist + '" data-cover="' + (item.cover || '') + '" data-lrc="' + (item.lrc || '') + '"><div class="flex gap-4 p-4"><div class="relative w-24 h-24 flex-shrink-0 rounded-lg overflow-hidden">' +
+            (item.cover ? '<img src="' + item.cover + '" alt="' + item.title + '" class="w-full h-full object-cover transition-transform duration-500 group-hover:scale-105" loading="lazy" decoding="async" />' : '<div class="w-full h-full bg-gray-200 dark:bg-gray-700 flex items-center justify-center"><div class="text-gray-400 text-3xl">&#x1f3b5;</div></div>') +
+            '<button class="play-btn absolute inset-0 flex items-center justify-center bg-black/40 opacity-0 group-hover:opacity-100 transition-opacity duration-200 cursor-pointer" data-url="' + item.url + '" data-title="' + item.title + '" data-artist="' + item.artist + '" data-cover="' + (item.cover || '') + '" data-lrc="' + (item.lrc || '') + '"><div class="w-10 h-10 rounded-full bg-(--primary) flex items-center justify-center text-white shadow-lg"><svg class="w-5 h-5 ml-0.5" viewBox="0 0 24 24" fill="currentColor"><path d="M8 5v14l11-7z"/></svg></div></button></div>' +
+            '<div class="flex flex-col justify-center min-w-0 flex-1"><h3 class="font-bold text-base text-neutral-900 dark:text-neutral-100 line-clamp-1">' + item.title + '</h3><p class="text-sm text-neutral-600 dark:text-neutral-400 line-clamp-1 mt-0.5">' + item.artist + '</p>' +
+            (item.album ? '<p class="text-xs text-neutral-500 dark:text-neutral-500 line-clamp-1 mt-0.5">' + item.album + '</p>' : '') +
+            tagsHtml + '</div>' + linkHtml + '</div></div>';
+
+          var wrapper = document.createElement("div");
+          wrapper.innerHTML = html;
+          frag.appendChild(wrapper.firstChild);
+        });
+        grid.appendChild(frag);
+      } catch(e) { /* ignore */ }
+    })();
+  </script>
+</MainGridLayout>

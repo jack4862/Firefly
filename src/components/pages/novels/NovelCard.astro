@@ -1,0 +1,82 @@
+---
+import I18nKey from "@/i18n/i18nKey";
+import { i18n } from "@/i18n/translation";
+import { url } from "@/utils/url-utils";
+
+interface Props {
+	id: string;
+	title: string;
+	author: string;
+	cover: string;
+	description: string;
+	tags: string[];
+	status: "ongoing" | "completed";
+	chapterCount: number;
+}
+
+const { id, title, author, cover, description, tags, status, chapterCount } = Astro.props;
+
+const statusLabel = status === "ongoing"
+	? i18n(I18nKey.novelsStatusOngoing)
+	: i18n(I18nKey.novelsStatusCompleted);
+const statusColor = status === "ongoing" ? "bg-green-500" : "bg-blue-500";
+---
+
+<a
+  href={url(`/novels/${id}/`)}
+  data-tags={tags?.join(",") || ""}
+  class="novel-card group relative block overflow-hidden rounded-xl transition-all duration-300 hover:shadow-lg hover:scale-[1.02] card-base"
+>
+  <div class="flex gap-4 p-4">
+    <div class="relative w-28 h-40 flex-shrink-0 rounded-lg overflow-hidden">
+      {cover ? (
+        <img
+          src={cover}
+          alt={title}
+          class="w-full h-full object-cover transition-transform duration-500 group-hover:scale-105"
+          loading="lazy"
+          decoding="async"
+        />
+      ) : (
+        <div class="w-full h-full bg-gray-200 dark:bg-gray-700 flex items-center justify-center">
+          <div class="text-gray-400 text-4xl">&#x1f4d6;</div>
+        </div>
+      )}
+
+      <div class={`absolute top-2 left-2 px-2 py-0.5 rounded-full text-xs text-white font-medium ${statusColor}`}>
+        {statusLabel}
+      </div>
+    </div>
+
+    <div class="flex flex-col justify-between min-w-0 flex-1 py-1">
+      <div>
+        <h3 class="font-bold text-lg text-neutral-900 dark:text-neutral-100 line-clamp-2">
+          {title}
+        </h3>
+        <p class="text-sm text-neutral-500 dark:text-neutral-400 mt-1">
+          {i18n(I18nKey.novelsAuthor)}：{author}
+        </p>
+        {description && (
+          <p class="text-sm text-neutral-600 dark:text-neutral-400 line-clamp-2 mt-2 leading-relaxed">
+            {description}
+          </p>
+        )}
+      </div>
+
+      <div class="flex items-center gap-3 mt-2 flex-wrap">
+        <span class="text-xs text-neutral-500">
+          {i18n(I18nKey.novelsChapterCount).replace("{count}", String(chapterCount))}
+        </span>
+        {tags && tags.length > 0 && (
+          <div class="flex flex-wrap gap-1">
+            {tags.slice(0, 3).map((tag) => (
+              <span class="text-[0.6rem] px-1.5 py-0.5 rounded bg-(--btn-regular-bg) text-(--btn-content)">
+                {tag}
+              </span>
+            ))}
+          </div>
+        )}
+      </div>
+    </div>
+  </div>
+</a>

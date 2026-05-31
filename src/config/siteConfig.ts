@@ -138,6 +138,14 @@ export const siteConfig: SiteConfig = {
 		bangumi: true,
 		// 相册页面开关
 		gallery: true,
+		// 小说书架页面开关
+		novels: true,
+		// 音乐库页面开关
+		musicLibrary: true,
+		// 动画收藏页面开关
+		anime: true,
+		// 后台管理页面开关（默认关闭，需手动开启）
+		admin: true,
 	},
 
 	// 分类导航栏开关，在首页和归档页顶部显示分类快捷导航

@@ -186,6 +186,18 @@ export default defineConfig({
 				if (pathname === "/gallery/" && !siteConfig.pages.gallery) {
 					return false;
 				}
+				if (pathname.startsWith("/novels/") && !siteConfig.pages.novels) {
+					return false;
+				}
+				if (pathname === "/music/" && !siteConfig.pages.musicLibrary) {
+					return false;
+				}
+				if (pathname === "/anime/" && !siteConfig.pages.anime) {
+					return false;
+				}
+				if (pathname === "/admin/" && !siteConfig.pages.admin) {
+					return false;
+				}
 
 				return true;
 			},
